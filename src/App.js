@@ -13,58 +13,74 @@ function App() {
       type,
       props: {
         text: type === "text" ? "טקסט חדש" : type === "button" ? "כפתור" : "",
+        placeholder: type === "field" ? "שדה חדש" : "",
+        title: type === "div" ? "כותרת בלוק" : "",
         backgroundColor: "#ffffff",
         fontFamily: "inherit",
+        fontSize: 16,
+        textAlign: "right",
+        bold: false,
+        italic: false,
+        underline: false,
+        noBorder: false,
       },
       children: type === "div" ? [] : undefined,
     };
 
-    const selectedElement = findById(elements, selectedId);
+    setElements((prev) => {
+      const updated = structuredClone(prev);
 
-    // ⛔ Prevent adding div inside div
-    if (type === "div") {
-      setElements([...elements, newElement]);
-    } else if (selectedElement?.type === "div") {
-      setElements((prev) => addToParent(prev, selectedId, newElement));
-    } else {
-      setElements([...elements, newElement]);
-    }
+      if (selectedId) {
+        const insertInto = (items) => {
+          for (let item of items) {
+            if (item.id === selectedId && item.type === "div") {
+              item.children = item.children || [];
+              item.children.push(newElement);
+              return true;
+            }
+            if (item.children) {
+              const inserted = insertInto(item.children);
+              if (inserted) return true;
+            }
+          }
+          return false;
+        };
 
-    setSelectedId(newElement.id);
+        const wasInserted = insertInto(updated);
+        if (wasInserted) {
+          setSelectedId(newElement.id);
+          return updated;
+        }
+      }
+
+      // fallback: add to root
+      setSelectedId(newElement.id);
+      return [...prev, newElement];
+    });
   };
 
-  const addToParent = (list, parentId, newEl) =>
-    list.map((el) => {
-      if (el.id === parentId && el.type === "div") {
-        return {
-          ...el,
-          children: [...(el.children || []), newEl],
-        };
-      } else if (el.children) {
-        return { ...el, children: addToParent(el.children, parentId, newEl) };
-      }
-      return el;
-    });
-
-  const updateElement = (updated) => {
-    const updateRecursive = (list) =>
-      list.map((el) =>
+  const handleElementUpdate = (updated) => {
+    const updateRecursively = (items) =>
+      items.map((el) =>
         el.id === updated.id
           ? updated
-          : el.children
-          ? { ...el, children: updateRecursive(el.children) }
-          : el
+          : {
+              ...el,
+              children: el.children ? updateRecursively(el.children) : undefined,
+            }
       );
-    setElements((prev) => updateRecursive(prev));
+
+    setElements((prev) => updateRecursively(prev));
   };
 
   return (
     <div className="app">
       <div className="toolbar">
-        <button onClick={() => addElement("div")}>הוסף בלוק</button>
         <button onClick={() => addElement("text")}>הוסף טקסט</button>
         <button onClick={() => addElement("image")}>הוסף תמונה</button>
         <button onClick={() => addElement("button")}>הוסף כפתור</button>
+        <button onClick={() => addElement("field")}>הוסף שדה</button>
+        <button onClick={() => addElement("div")}>הוסף בלוק</button>
       </div>
 
       <div className="editor">
@@ -75,19 +91,19 @@ function App() {
           onSelectElement={setSelectedId}
         />
         <SettingsPanel
-          selectedElement={findById(elements, selectedId)}
-          onChange={updateElement}
+          selectedElement={findElementById(elements, selectedId)}
+          onChange={handleElementUpdate}
         />
       </div>
     </div>
   );
 }
 
-function findById(list, id) {
-  for (const el of list) {
+function findElementById(elements, id) {
+  for (const el of elements) {
     if (el.id === id) return el;
     if (el.children) {
-      const found = findById(el.children, id);
+      const found = findElementById(el.children, id);
       if (found) return found;
     }
   }

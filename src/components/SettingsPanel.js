@@ -1,7 +1,6 @@
-//components/SettingsPanel.js
 import React from "react";
 
-const fonts = ["inherit", "Arial", "Verdana", "Tahoma", "Courier New", "Georgia", "Roboto"];
+const fonts = ["inherit", "Arial", "Verdana", "Tahoma", "Courier New", "Georgia", "Roboto", "Assistant"];
 const fontSizes = [12, 14, 16, 18, 24, 32];
 
 export default function SettingsPanel({ selectedElement, onChange }) {
@@ -37,6 +36,17 @@ export default function SettingsPanel({ selectedElement, onChange }) {
         </>
       )}
 
+      {selectedElement.type === "field" && (
+        <>
+          <label>Placeholder (כותרת שדה)</label>
+          <input
+            type="text"
+            value={selectedElement.props?.placeholder || ""}
+            onChange={(e) => handleChange("placeholder", e.target.value)}
+          />
+        </>
+      )}
+
       {selectedElement.type === "div" && (
         <>
           <label>כותרת בלוק</label>
@@ -47,7 +57,6 @@ export default function SettingsPanel({ selectedElement, onChange }) {
           />
         </>
       )}
-
 
       <label>צבע רקע</label>
       <input
@@ -100,6 +109,13 @@ export default function SettingsPanel({ selectedElement, onChange }) {
         </button>
         <button onClick={() => toggleStyle("underline")}>
           {selectedElement.props?.underline ? "Underline ✔" : "Underline"}
+        </button>
+      </div>
+
+      <label>הסתר גבול</label>
+      <div>
+        <button onClick={() => toggleStyle("noBorder")}>
+          {selectedElement.props?.noBorder ? "ללא גבול ✔" : "ללא גבול"}
         </button>
       </div>
     </div>
